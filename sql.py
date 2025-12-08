@@ -43,20 +43,30 @@ def get_entradas(empresa,data_inicial,data_final):
     return entradas
 def formata_valor(valor):
     return f'R$ {valor:,.2f}'.replace(",","X").replace(".",",").replace("X",".")
-
+def get_empregados (empresa):
+    conn=conecta_banco()
+    cursor=conn.cursor()
+    query="""
+        SELECT
+        e.nome, e.salario, e.data_nascimento
+        FROM
+        bethadba.foempregados e
+        LEFT JOIN bethadba.forescisoes r
+        ON e.codi_emp = r.codi_emp AND e.i_empregados =r.i_empregados 
+        WHERE e.codi_emp = ? AND r.demissao IS NULL 
+        ORDER BY e.salario DESC
+        """
+    cursor.execute(query,(empresa))
+    empregados=cursor.fetchall()
+    conn.close()
+    return empregados
 #Fim Funções
 st.set_page_config(layout='wide')
-
-
-st.title('B.i gcont')
-st.subheader('Autor André Griebeler')
-col1,col2,col3=st.columns(3)
-with col1:
-    cod=st.number_input('Insira o código da empresa:',width=300,step=0)
-with col2:   
-    dt_init=st.date_input('Insira a data Inicial',format='DD/MM/YYYY',width=300)
-with col3:
-    dt_end=st.date_input('Insira a data final',format='DD/MM/YYYY',width=300)
+st.title('B.I Gcont')
+st.subheader('Autor: André Griebeler')
+cod=st.sidebar.number_input('Insira o código da empresa:',width=300,step=0)
+dt_init=st.sidebar.date_input('Insira a data Inicial',format='DD/MM/YYYY',width=300)
+dt_end=st.sidebar.date_input('Insira a data final',format='DD/MM/YYYY',width=300)
 saidas=get_saidas(cod,dt_init, dt_end)
 saidas_list = []
 for x in saidas:
@@ -67,16 +77,37 @@ entrads_list = []
 for x in entradas: 
     entrads_list.append([x[0],x[1],x[2],x[3].strftime("%d/%m/%Y")])
 entradas_df=pd.DataFrame(entrads_list,columns=["Documentos","Fornecedores","Valor","Data"])
-soma_saidas = float(saidas_df["Valor"].sum())
-soma_entradas = float(entradas_df["Valor"].sum())
-colun1, colun2=st.columns(2) 
+
+
+colun1, colun2=st.columns(2)
 with colun1: 
-    cliente = st.text_input("Insira o nome do cliente a pesquisar: ").lower()
-    saidas_df_fil = saidas_df[saidas_df["Clientes"].str.lower().str.contains(cliente)]
     st.subheader("Relatório das Saídas")
+    cliente = st.text_input("Insira o nome do cliente a pesquisar: ",width=350).lower()
+    saidas_df_fil = saidas_df[saidas_df["Clientes"].str.lower().str.contains(cliente)]
+    soma_saidas = float(saidas_df_fil["Valor"].sum())
+    saidas_df_fil["Valor"]=saidas_df_fil["Valor"].apply(formata_valor)
     st.dataframe(saidas_df_fil)
+
     st.metric('Soma das Saídas',formata_valor(soma_saidas))
 with colun2: 
     st.subheader("Relatório das Entradas")
-    st.dataframe(entradas_df)
+    fornecedores = st.text_input("Insira o nome do fornecedor a pesquisar: ",width=350).lower()
+    entradas_df_fil = entradas_df[entradas_df["Fornecedores"].str.lower().str.contains(fornecedores)]
+    soma_entradas = float(entradas_df_fil["Valor"].sum())
+    entradas_df_fil["Valor"]=entradas_df_fil["Valor"].apply(formata_valor)
+    st.dataframe(entradas_df_fil)
     st.metric('Soma das Entradas',formata_valor(soma_entradas))
+st.divider() 
+st.subheader ('Empregados:')
+try:
+    empregados= get_empregados(cod)
+    empregados_list=[]
+    for x in empregados:
+        empregados_list.append([x[0],x[1],x[2].strftime("%d/%m/%Y")])
+    empregados_df = pd.DataFrame (empregados_list, columns= ['Nome','Salário','Data de Nascimento'])
+    maior_salario = empregados_df.loc[empregados_df["Salário"].idxmax(),"Nome"]
+    st.metric("Maior Salário",maior_salario)
+    empregados_df["Salário"]=empregados_df["Salário"].apply(formata_valor)
+    st.dataframe(empregados_df)
+except Exception as e:
+    st.info(f"Insira o código da empresa")
