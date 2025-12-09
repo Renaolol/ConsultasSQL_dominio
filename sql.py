@@ -2,72 +2,22 @@ import pyodbc
 from pprint import pprint
 import streamlit as st
 import pandas as pd
-CONEXAO = "DSN=ContabilPBI;UID=PBI;PWD=Pbi"
-#Conexão com o banco de dados
-def conecta_banco():
-    return pyodbc.connect(CONEXAO)
+from dependencies import *
 
-#Funções
-def get_saidas(empresa:int, data_inicial, data_final):
-    conn=conecta_banco()
-    cursor=conn.cursor()
-    query="""
-        SELECT 
-        s.nume_sai, c.nomr_cli, s.vcon_sai, s.ddoc_sai
-        FROM
-        bethadba.efsaidas s
-        LEFT JOIN bethadba.efclientes c
-        ON s.codi_emp = c.codi_emp AND
-        s.codi_cli = c.codi_cli
-        WHERE s.codi_emp = ? AND s.ddoc_sai >= ? AND s.ddoc_sai <= ?
-        """
-    cursor.execute(query,(empresa,data_inicial,data_final))
-    saidas=cursor.fetchall()
-    conn.close()
-    return saidas
-def get_entradas(empresa,data_inicial,data_final):
-    conn=conecta_banco()
-    cursor=conn.cursor()
-    query= """
-        SELECT
-        e.nume_ent, f.nomr_for, e.vcon_ent, e.ddoc_ent
-        FROM 
-        bethadba.efentradas e
-        LEFT JOIN bethadba.effornece f
-        ON e.codi_emp = f.codi_emp AND e.codi_for = f.codi_for
-        WHERE e.codi_emp = ? AND e.ddoc_ent >= ? AND e.ddoc_ent <= ? 
-        """
-    cursor.execute(query,(empresa,data_inicial,data_final))
-    entradas=cursor.fetchall()
-    conn.close()
-    return entradas
-def formata_valor(valor):
-    return f'R$ {valor:,.2f}'.replace(",","X").replace(".",",").replace("X",".")
-def get_empregados (empresa):
-    conn=conecta_banco()
-    cursor=conn.cursor()
-    query="""
-        SELECT
-        e.nome, e.salario, e.data_nascimento
-        FROM
-        bethadba.foempregados e
-        LEFT JOIN bethadba.forescisoes r
-        ON e.codi_emp = r.codi_emp AND e.i_empregados =r.i_empregados 
-        WHERE e.codi_emp = ? AND r.demissao IS NULL 
-        ORDER BY e.salario DESC
-        """
-    cursor.execute(query,(empresa))
-    empregados=cursor.fetchall()
-    conn.close()
-    return empregados
-#Fim Funções
 st.set_page_config(layout='wide',page_icon='icone.ico',page_title="B.I Gcont")
 st.logo("horizontal4.png")
-st.title('B.I Gcont')
-st.subheader('Autor: André Griebeler')
+
 cod=st.sidebar.number_input('Insira o código da empresa:',width=300,step=0)
 dt_init=st.sidebar.date_input('Insira a data Inicial',format='DD/MM/YYYY',width=300)
 dt_end=st.sidebar.date_input('Insira a data final',format='DD/MM/YYYY',width=300)
+nome_empresa= get_empresas(cod)
+col_titulo,col_autor=st.columns(2)
+with col_titulo:
+    st.title('B.I Gcont')
+with col_autor:
+    st.title('Autor: André Griebeler')
+st.subheader(nome_empresa[0][0])
+cadastro_empresa=get_cadastro(cod)
 saidas=get_saidas(cod,dt_init, dt_end)
 saidas_list = []
 for x in saidas:
