@@ -61,7 +61,8 @@ def get_empregados (empresa):
     conn.close()
     return empregados
 #Fim Funções
-st.set_page_config(layout='wide')
+st.set_page_config(layout='wide',page_icon='icone.ico',page_title="B.I Gcont")
+st.logo("horizontal4.png")
 st.title('B.I Gcont')
 st.subheader('Autor: André Griebeler')
 cod=st.sidebar.number_input('Insira o código da empresa:',width=300,step=0)
@@ -99,15 +100,23 @@ with colun2:
     st.metric('Soma das Entradas',formata_valor(soma_entradas))
 st.divider() 
 st.subheader ('Empregados:')
-try:
-    empregados= get_empregados(cod)
-    empregados_list=[]
-    for x in empregados:
-        empregados_list.append([x[0],x[1],x[2].strftime("%d/%m/%Y")])
-    empregados_df = pd.DataFrame (empregados_list, columns= ['Nome','Salário','Data de Nascimento'])
-    maior_salario = empregados_df.loc[empregados_df["Salário"].idxmax(),"Nome"]
-    st.metric("Maior Salário",maior_salario)
-    empregados_df["Salário"]=empregados_df["Salário"].apply(formata_valor)
-    st.dataframe(empregados_df)
-except Exception as e:
-    st.info(f"Insira o código da empresa")
+col_empregados1, col_empregados2 = st.columns(2)
+with col_empregados1:
+    try:
+        empregados= get_empregados(cod)
+        empregados_list=[]
+        for x in empregados:
+            empregados_list.append([x[0],x[1],x[2].strftime("%d/%m/%Y")])
+        empregados_df = pd.DataFrame (empregados_list, columns= ['Nome','Salário','Data de Nascimento'])
+        empregados_df_bar = empregados_df.copy()
+        empregados_df_bar["Salário"] = empregados_df_bar["Salário"].astype(float)
+        maior_salario = empregados_df.loc[empregados_df["Salário"].idxmax(),"Nome"]
+        st.metric("Maior Salário",maior_salario)
+        empregados_df["Salário"]=empregados_df["Salário"].apply(formata_valor)
+        st.dataframe(empregados_df)
+    except Exception as e:
+        st.info(f"Insira o código da empresa")
+with col_empregados2:
+    st.subheader("Gráfico dos empregados")
+    st.bar_chart(empregados_df_bar,x="Nome",y="Salário",color="#Fad32b")
+st.divider()    
