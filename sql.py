@@ -16,8 +16,23 @@ with col_titulo:
     st.title('B.I Gcont')
 with col_autor:
     st.title('Autor: André Griebeler')
-st.subheader(nome_empresa[0][0])
+try:    
+    st.subheader(nome_empresa[0][0])
+except:
+    st.info("Insira o código da empresa") 
+      
 cadastro_empresa=get_cadastro(cod)
+
+col_cadastro1,col_cadastro2, col_cadastro3 =st.columns(3)
+with col_cadastro1:
+    st.write(f'CNPJ: *{cadastro_empresa[0][0]}*')
+    st.write(f'Endereço: *{cadastro_empresa[0][2]}*')
+with col_cadastro2:
+    st.write(f'Telefone: *{cadastro_empresa[0][4]}*')
+    st.write(f'e-mail: *{cadastro_empresa[0][5]}*')
+with col_cadastro3:
+    st.write(f'Ramo: *{cadastro_empresa[0][3]}*')
+    
 saidas=get_saidas(cod,dt_init, dt_end)
 saidas_list = []
 for x in saidas:
