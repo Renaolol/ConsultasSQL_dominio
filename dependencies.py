@@ -13,13 +13,17 @@ def get_saidas(empresa:int, data_inicial, data_final):
     cursor=conn.cursor()
     query="""
         SELECT 
-        s.nume_sai, c.nomr_cli, s.vcon_sai, s.ddoc_sai
+            s.nume_sai, c.nomr_cli, s.vcon_sai, s.ddoc_sai
         FROM
-        bethadba.efsaidas s
-        LEFT JOIN bethadba.efclientes c
-        ON s.codi_emp = c.codi_emp AND
-        s.codi_cli = c.codi_cli
-        WHERE s.codi_emp = ? AND s.ddoc_sai >= ? AND s.ddoc_sai <= ?
+            bethadba.efsaidas s
+        LEFT JOIN
+            bethadba.efclientes c
+        ON
+            s.codi_emp = c.codi_emp 
+        AND
+            s.codi_cli = c.codi_cli
+        WHERE 
+            s.codi_emp = ? AND s.ddoc_sai >= ? AND s.ddoc_sai <= ?
         """
     cursor.execute(query,(empresa,data_inicial,data_final))
     saidas=cursor.fetchall()

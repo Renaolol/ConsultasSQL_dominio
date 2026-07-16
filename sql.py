@@ -22,7 +22,6 @@ except:
     st.info("Insira o código da empresa") 
       
 cadastro_empresa=get_cadastro(cod)
-
 col_cadastro1,col_cadastro2, col_cadastro3 =st.columns(3)
 with col_cadastro1:
     st.write(f'CNPJ: *{cadastro_empresa[0][0]}*')
